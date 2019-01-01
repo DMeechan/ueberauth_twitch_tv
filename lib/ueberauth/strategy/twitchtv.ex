@@ -69,7 +69,7 @@ defmodule Ueberauth.Strategy.TwitchTv do
   Deafult is "user,public_repo"
   """
   use Ueberauth.Strategy, uid_field: :login,
-                          default_scope: "user,public_repo",
+                          default_scope: "user:read:email",
                           oauth2_module: Ueberauth.Strategy.TwitchTv.OAuth
 
   alias Ueberauth.Auth.Info
