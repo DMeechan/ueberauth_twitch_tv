@@ -41,8 +41,8 @@ defmodule UeberauthTwitchTv.Mixfile do
 
   defp package do
     [files: ["lib", "mix.exs", "README.md", "LICENSE"],
-      maintainers: ["Tim Smith"],
+      maintainers: ["Andy Warner"],
       licenses: ["MIT"],
-      links: %{"GitHub": "https://github.com/tim-machine/ueberauth_twitch_tv"}]
+      links: %{"GitHub": "https://github.com/warnerandy/ueberauth_twitch_tv"}]
   end
 end
