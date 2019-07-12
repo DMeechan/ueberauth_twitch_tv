@@ -191,8 +191,7 @@ defmodule Ueberauth.Strategy.TwitchTv do
   defp fetch_user(conn, token) do
     conn = put_private(conn, :twitch_tv_token, token)
     path = "https://api.twitch.tv/helix/users"
-    headers = [Authorization: "OAuth #{token.access_token}"]
-    resp = Ueberauth.Strategy.TwitchTv.OAuth.get(token, path, headers)
+    resp = __MODULE__.OAuth.get(token, path)
 
     case resp do
       {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
@@ -204,6 +203,9 @@ defmodule Ueberauth.Strategy.TwitchTv do
 
       {:error, %OAuth2.Error{reason: reason}} ->
         set_errors!(conn, [error("OAuth2", reason)])
+
+      {:error, %OAuth2.Response{status_code: status_code, body: body}} ->
+        set_errors!(conn, [error("OAuth2", "Error #{status_code}" <> to_string(body))])
     end
   end
 
@@ -211,9 +213,9 @@ defmodule Ueberauth.Strategy.TwitchTv do
     if value = conn.params[to_string(key)], do: Keyword.put(opts, key, value), else: opts
   end
 
-  defp with_optional(opts, key, conn) do
-    if option(conn, key), do: Keyword.put(opts, key, option(conn, key)), else: opts
-  end
+  # defp with_optional(opts, key, conn) do
+  #   if option(conn, key), do: Keyword.put(opts, key, option(conn, key)), else: opts
+  # end
 
   defp oauth_client_options_from_conn(conn) do
     base_options = [redirect_uri: callback_url(conn)]

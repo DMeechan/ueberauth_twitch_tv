@@ -46,9 +46,9 @@ defmodule Ueberauth.Strategy.TwitchTv.OAuth do
   end
 
   def get(token, url, headers \\ [], options \\ []) do
-    [token: token]
-    |> client
+    client()
     |> put_param("client_secret", client().client_secret)
+    |> put_header("Authorization", "Bearer #{token.access_token}")
     |> OAuth2.Client.get(url, headers, options)
   end
 
