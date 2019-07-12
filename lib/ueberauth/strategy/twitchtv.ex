@@ -63,7 +63,7 @@ defmodule Ueberauth.Strategy.TwitchTv do
 
       config :ueberauth, Ueberauth,
         providers: [
-          twitchtv: { Ueberauth.Strategy.TwitchtTv, [default_scope: "user,public_repo"] }
+          twitchtv: { Ueberauth.Strategy.TwitchtTv, [default_scope: "user:read:email"] }
         ]
 
   Deafult is "user,public_repo"
@@ -88,13 +88,13 @@ defmodule Ueberauth.Strategy.TwitchTv do
   """
   def handle_request!(conn) do
     scopes = conn.params["scope"] || option(conn, :default_scope)
-    opts = [redirect_uri: callback_url(conn), scope: scopes]
 
-    opts =
-      if conn.params["state"], do: Keyword.put(opts, :state, conn.params["state"]), else: opts
+    params =
+      [scope: scopes]
+      |> with_param(:state, conn)
 
-    module = option(conn, :oauth2_module)
-    redirect!(conn, apply(module, :authorize_url!, [opts]))
+    opts = oauth_client_options_from_conn(conn)
+    redirect!(conn, __MODULE__.OAuth.authorize_url!(params, opts))
   end
 
   @doc """
@@ -102,24 +102,15 @@ defmodule Ueberauth.Strategy.TwitchTv do
   `ueberauth_failure` struct. Otherwise the information returned from TwitchTv is returned in the `Ueberauth.Auth` struct.
   """
   def handle_callback!(%Plug.Conn{params: %{"code" => code}} = conn) do
-    module = option(conn, :oauth2_module)
+    params = [code: code]
+    opts = oauth_client_options_from_conn(conn)
 
-    token =
-      apply(module, :get_token!, [
-        [
-          code: code,
-          redirect_uri: callback_url(conn)
-        ]
-      ])
+    case __MODULE__.OAuth.get_access_token(params, opts) do
+      {:ok, token} ->
+        fetch_user(conn, token)
 
-    IO.inspect(%{token: token})
-
-    if token.access_token == nil do
-      set_errors!(conn, [
-        error(token.other_params["error"], token.other_params["error_description"])
-      ])
-    else
-      fetch_user(conn, token)
+      {:error, {error_code, error_description}} ->
+        set_errors!(conn, [error(error_code, error_description)])
     end
   end
 
@@ -216,7 +207,26 @@ defmodule Ueberauth.Strategy.TwitchTv do
     end
   end
 
+  defp with_param(opts, key, conn) do
+    if value = conn.params[to_string(key)], do: Keyword.put(opts, key, value), else: opts
+  end
+
+  defp with_optional(opts, key, conn) do
+    if option(conn, key), do: Keyword.put(opts, key, option(conn, key)), else: opts
+  end
+
+  defp oauth_client_options_from_conn(conn) do
+    base_options = [redirect_uri: callback_url(conn)]
+    request_options = conn.private[:ueberauth_request_options].options
+
+    case {request_options[:client_id], request_options[:client_secret]} do
+      {nil, _} -> base_options
+      {_, nil} -> base_options
+      {id, secret} -> [client_id: id, client_secret: secret] ++ base_options
+    end
+  end
+
   defp option(conn, key) do
-    Dict.get(options(conn), key, Dict.get(default_options, key))
+    Keyword.get(options(conn), key, Keyword.get(default_options(), key))
   end
 end

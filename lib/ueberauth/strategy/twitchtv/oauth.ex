@@ -28,44 +28,42 @@ defmodule Ueberauth.Strategy.TwitchTv.OAuth do
   These options are only useful for usage outside the normal callback phase of Ueberauth.
   """
   def client(opts \\ []) do
-    opts =
-      Keyword.merge(@defaults, Application.get_env(:ueberauth, Ueberauth.Strategy.TwitchTv.OAuth))
-      |> Keyword.merge(opts)
+    config = Application.get_env(:ueberauth, __MODULE__, [])
+    opts = @defaults |> Keyword.merge(opts) |> Keyword.merge(config)
+    json_library = Ueberauth.json_library()
 
     OAuth2.Client.new(opts)
+    |> OAuth2.Client.put_serializer("application/json", json_library)
   end
 
   @doc """
   Provides the authorize url for the request phase of Ueberauth. No need to call this usually.
   """
   def authorize_url!(params \\ [], opts \\ []) do
-    client(opts)
+    opts
+    |> client()
     |> OAuth2.Client.authorize_url!(params)
   end
 
-  def get_token!(params \\ [], options \\ %{}) do
-    headers = Dict.get(options, :headers, [])
-    options = Dict.get(options, :options, [])
-    client_options = Dict.get(options, :client_options, [])
-    client = client(client_options)
-
-    case client
-         |> put_param("client_secret", client.client_secret)
-         |> put_header("Accept", "application/json")
-         |> OAuth2.Client.get_token!(params, headers, options) do
-      %{token: token} -> token
-    end
+  def get(token, url, headers \\ [], options \\ []) do
+    [token: token]
+    |> client
+    |> put_param("client_secret", client().client_secret)
+    |> OAuth2.Client.get(url, headers, options)
   end
 
-  def get(token, url, headers \\ [], options \\ []) do
-    headers = Dict.get(options, :headers, [])
-    options = Dict.get(options, :options, [])
-    client_options = Dict.get(options, :client_options, [])
-    client = client(token: token)
+  def get_access_token(params \\ [], opts \\ []) do
+    case opts |> client |> OAuth2.Client.get_token(params) do
+      {:error, %{body: %{"error" => error, "error_description" => description}}} ->
+        {:error, {error, description}}
 
-    client
-    |> put_param("client_secret", client.client_secret)
-    |> OAuth2.Client.get(url, headers, options)
+      {:ok, %{token: %{access_token: nil} = token}} ->
+        %{"error" => error, "error_description" => description} = token.other_params
+        {:error, {error, description}}
+
+      {:ok, %{token: token}} ->
+        {:ok, token}
+    end
   end
 
   # Strategy Callbacks
@@ -76,6 +74,7 @@ defmodule Ueberauth.Strategy.TwitchTv.OAuth do
 
   def get_token(client, params, headers) do
     client
+    |> put_param("client_secret", client.client_secret)
     |> put_header("Accept", "application/json")
     |> OAuth2.Strategy.AuthCode.get_token(params, headers)
   end
