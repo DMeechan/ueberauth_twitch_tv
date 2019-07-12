@@ -14,7 +14,7 @@ defmodule Ueberauth.Strategy.TwitchTv.OAuth do
     strategy: __MODULE__,
     site: "https://id.twitch.tv",
     authorize_url: "https://id.twitch.tv/oauth2/authorize",
-    token_url: "https://id.twitch.tv/oauth2/token",
+    token_url: "https://id.twitch.tv/oauth2/token"
   ]
 
   @doc """
@@ -28,8 +28,9 @@ defmodule Ueberauth.Strategy.TwitchTv.OAuth do
   These options are only useful for usage outside the normal callback phase of Ueberauth.
   """
   def client(opts \\ []) do
-    opts = Keyword.merge(@defaults, Application.get_env(:ueberauth, Ueberauth.Strategy.TwitchTv.OAuth))
-    |> Keyword.merge(opts)
+    opts =
+      Keyword.merge(@defaults, Application.get_env(:ueberauth, Ueberauth.Strategy.TwitchTv.OAuth))
+      |> Keyword.merge(opts)
 
     OAuth2.Client.new(opts)
   end
@@ -47,11 +48,12 @@ defmodule Ueberauth.Strategy.TwitchTv.OAuth do
     options = Dict.get(options, :options, [])
     client_options = Dict.get(options, :client_options, [])
     client = client(client_options)
+
     case client
-      |> put_param("client_secret", client.client_secret)
-      |> put_header("Accept", "application/json")
-      |> OAuth2.Client.get_token!(params, headers, options)  do
-        %{token: token} -> token
+         |> put_param("client_secret", client.client_secret)
+         |> put_header("Accept", "application/json")
+         |> OAuth2.Client.get_token!(params, headers, options) do
+      %{token: token} -> token
     end
   end
 
@@ -59,7 +61,7 @@ defmodule Ueberauth.Strategy.TwitchTv.OAuth do
     headers = Dict.get(options, :headers, [])
     options = Dict.get(options, :options, [])
     client_options = Dict.get(options, :client_options, [])
-    client = client([token: token])
+    client = client(token: token)
 
     client
     |> put_param("client_secret", client.client_secret)
