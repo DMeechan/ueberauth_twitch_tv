@@ -1,7 +1,7 @@
 defmodule UeberauthTwitchTv.Mixfile do
   use Mix.Project
 
-  @version "0.4.4"
+  @version "0.5.0"
   @repo_url "https://github.com/DMeechan/ueberauth_twitch_tv"
 
   def project do
@@ -10,7 +10,7 @@ defmodule UeberauthTwitchTv.Mixfile do
       version: @version,
       name: "Ueberauth Twitch.tv",
       package: package(),
-      elixir: "~> 1.3",
+      elixir: "~> 1.7",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       source_url: @repo_url,
@@ -27,12 +27,9 @@ defmodule UeberauthTwitchTv.Mixfile do
 
   defp deps do
     [
-      {:ueberauth, "~> 0.4"},
-      {:oauth2, "~> 0.9"},
-
-      # docs dependencies
-      {:earmark, "~> 0.2", only: :dev},
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:ueberauth, "~> 0.6"},
+      {:oauth2, "~> 1.0"},
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false}
     ]
   end
 
