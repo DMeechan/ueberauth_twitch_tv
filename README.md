@@ -10,7 +10,7 @@
 
     ```elixir
     def deps do
-      [{:ueberauth_twitch_tv, "~> 0.3.0"}]
+      [{:ueberauth_twitch_tv, "~> 0.5.0"}]
     end
     ```
 
@@ -72,14 +72,14 @@ Depending on the configured url you can initial the request through:
 
 Or with options:
 
-    /auth/twitchtv?scope=user,public_repo
+    /auth/twitchtv?scope=user:read:email
 
 By default the requested scope is "user,public\_repo". Scope can be configured either explicitly as a `scope` query value on the request path or in your configuration:
 
 ```elixir
 config :ueberauth, Ueberauth,
   providers: [
-    twitchtv: {Ueberauth.Strategy.TwitchTv, [default_scope: "user,public_repo,notifications"]}
+    twitchtv: {Ueberauth.Strategy.TwitchTv, [default_scope: "user:read:email"]}
   ]
 ```
 
